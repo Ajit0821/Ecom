@@ -10,9 +10,12 @@ import com.ecom.repository.CategoryRepository;
 import com.ecom.repository.ProductRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -28,15 +31,17 @@ public class ProductServiceImpl implements ProductService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(()->
                         new ResourceNotFoundException("Category","categoryId",categoryId,"category not found"));
+        List<Product> presentProduct=productRepository.findByProductNameLikeIgnoreCase(product.getProductName());
+        if(presentProduct.size() >1) {
+           throw new ApiException("Product already present");
+        }
         product.setCategory(category);
-        double specialPrice = product.getPrice()-
-                ((product.getDiscount()*0.01) * product.getPrice());
+        double specialPrice = getSpecialPrice(product);
         product.setSpecialPrice(specialPrice);
         product.setImage("default_image");
         Product savedProduct = productRepository.save(product);
         return modelMapper.map(savedProduct,ProductDto.class);
     }
-
     @Override
     public ProductResponse getAllProducts() {
         List<Product> product=productRepository.findAll();
@@ -61,4 +66,41 @@ public class ProductServiceImpl implements ProductService {
         productResponse.setContent(productDto);
         return productResponse;
     }
+    @Override
+    public ProductResponse getProductByKeyword(String keyword) {
+        List<Product> productDtoList = productRepository.findByProductNameLikeIgnoreCase("%"+keyword+"%");
+        if(productDtoList.isEmpty()){
+            throw new ApiException("No product found with the keyword ");
+        }
+        List<ProductDto> productDtos=productDtoList.stream().map(p->modelMapper.map(p,ProductDto.class)).toList();
+        ProductResponse productResponse=new ProductResponse();
+        productResponse.setContent(productDtos);
+        return productResponse;
+    }
+
+    @Override
+    public ProductDto deleteProductById(Long productId) {
+        Product product=productRepository.findById(productId)
+                .orElseThrow(()->new ResourceNotFoundException("Product","productId",productId,"product not found"));
+        productRepository.deleteById(productId);
+        return modelMapper.map(product,ProductDto.class);
+    }
+
+    @Override
+    public ProductDto updateProductById(Product product, Long productId) {
+        Product savedProduct=productRepository.findById(productId)
+                .orElseThrow(()->new ResourceNotFoundException("Product","productId",productId,"product not found"));
+        savedProduct.setDiscount(product.getDiscount());
+        savedProduct.setPrice(product.getPrice());
+        savedProduct.setQuantity(product.getQuantity());
+        savedProduct.setSpecialPrice(getSpecialPrice(product));
+        productRepository.save(savedProduct);
+        return modelMapper.map(savedProduct,ProductDto.class);
+    }
+
+    private static double getSpecialPrice(Product product) {
+        return product.getPrice()
+                - ((product.getDiscount()*0.01) * product.getPrice());
+    }
+
 }

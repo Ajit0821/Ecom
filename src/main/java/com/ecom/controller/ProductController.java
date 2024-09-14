@@ -9,8 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api")
 public class ProductController {
@@ -34,5 +32,21 @@ public class ProductController {
     public ResponseEntity<ProductResponse> getProductByCategoryIdId(@PathVariable Long categoryId){
         ProductResponse allProducts=productService.getProductByCategoryId(categoryId);
         return new ResponseEntity<>(allProducts,HttpStatus.OK);
+    }
+
+    @GetMapping("/public/product/keyword/{keyword}")
+    public ResponseEntity<ProductResponse> getProductByKeyword(@PathVariable String keyword){
+        ProductResponse product=productService.getProductByKeyword(keyword);
+        return new ResponseEntity<>(product,HttpStatus.OK);
+    }
+    @DeleteMapping("/admin/product/{productId}")
+    public ResponseEntity<ProductDto> deleteProduct(@PathVariable Long productId){
+        ProductDto productDto=productService.deleteProductById(productId);
+        return new ResponseEntity<>(productDto,HttpStatus.OK);
+    }
+    @PutMapping("/admin/product/{productId}")
+    public ResponseEntity<ProductDto> updateProduct(@RequestBody Product product,@PathVariable Long productId){
+        ProductDto  productDto=productService.updateProductById(product,productId);
+        return new ResponseEntity<>(productDto,HttpStatus.OK);
     }
 }

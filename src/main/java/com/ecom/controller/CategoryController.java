@@ -60,11 +60,6 @@ public class CategoryController {
             return new ResponseEntity<>(e.getStatusCode());
         }
     }
-//    @GetMapping("/pincode/{pincode}")
-//    public ResponseEntity<PostalResponse[]> getPosttalDetails(@PathVariable String pincode) throws Exception {
-//        PostalResponse[] responses = postalApi.getPostalData(pincode);
-//        return new ResponseEntity<>(responses,HttpStatus.OK);
-//    }
     @GetMapping("/pincode/{pincode}")
     public ResponseEntity<List<String>> noOfPincodesFound(@PathVariable String pincode) throws Exception {
         List<String> pincodes=categoryService.findPincodes(pincode);
